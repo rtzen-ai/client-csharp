@@ -7,43 +7,11 @@ namespace RtzenAPIs
 {
     public class RtzenAPI
     {
-        public static async Task Main()
+
+        public static async Task<List<Vendor>> ReadVendorsAsync()
         {
-            Console.WriteLine("Started Sync");
+            List<Vendor> result = new();
 
-            // Read Data
-            if (Settings.READ_CHART_OF_ACCOUNTS)
-            {
-                await RtzenAPI.ReadChartOfAccountsAsync();
-            }
-            if (Settings.READ_VENDORS)
-            {
-                await RtzenAPI.ReadVendorsAsync();
-            }
-            if (Settings.READ_BILLS)
-            {
-                await RtzenAPI.ReadBillsAsync();
-            }
-
-            if (Settings.WRITE_CHART_OF_ACCOUNTS)
-            {
-                await RtzenAPI.WriteChartOfAccountsAsync();
-            }
-            if (Settings.WRITE_VENDORS)
-            {
-                await RtzenAPI.WriteVendorsAsync();
-            }
-            if (Settings.WRITE_BILLS)
-            {
-                await RtzenAPI.WriteBillsAsync();
-            }
-
-            Console.WriteLine("Sync Finished");
-
-        }
-
-        public static async Task ReadVendorsAsync()
-        {
             try
             {
                 bool hasNext = true;
@@ -56,7 +24,8 @@ namespace RtzenAPIs
                         var responseObject = JsonConvert.DeserializeObject<ResponseObject<Vendor>>(res);
                         foreach (var item in responseObject.Objects)
                         {
-                            Console.WriteLine("Page: " + page + ", Handle Vendor: " + item.Id);
+                            Console.WriteLine("Page: " + page + ", Vendor: " + item.Id);
+                            result.Add(item);
                         }
                         hasNext = responseObject.Paging.Next;
                         page++;
@@ -71,10 +40,13 @@ namespace RtzenAPIs
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
+
+            return result;
         }
 
-        public static async Task ReadChartOfAccountsAsync()
+        public static async Task<List<ChartOfAccount>> ReadChartOfAccountsAsync()
         {
+            List<ChartOfAccount> result = new();
             try
             {
                 bool hasNext = true;
@@ -87,7 +59,8 @@ namespace RtzenAPIs
                         var responseObject = JsonConvert.DeserializeObject<ResponseObject<ChartOfAccount>>(res);
                         foreach (var item in responseObject.Objects)
                         {
-                            Console.WriteLine("Page: " + page + ", Handle ChartOfAccount: " + item.Id);
+                            Console.WriteLine("Page: " + page + ", ChartOfAccount: " + item.Id);
+                            result.Add(item);
                         }
                         hasNext = responseObject.Paging.Next;
                         page++;
@@ -102,11 +75,13 @@ namespace RtzenAPIs
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
+            return result;
         }
 
 
-        public static async Task ReadBillsAsync()
+        public static async Task<List<Bill>> ReadBillsAsync()
         {
+            List<Bill> result = new();
             try
             {
                 bool hasNext = true;
@@ -119,7 +94,8 @@ namespace RtzenAPIs
                         var responseObject = JsonConvert.DeserializeObject<ResponseObject<Bill>>(res);
                         foreach (var item in responseObject.Objects)
                         {
-                            Console.WriteLine("Page: " + page + ", Handle Bill: " + item.Id);
+                            Console.WriteLine("Page: " + page + ", Bill: " + item.Id);
+                            result.Add(item);
                         }
                         hasNext = responseObject.Paging.Next;
                         page++;
@@ -134,24 +110,15 @@ namespace RtzenAPIs
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
+            return result;
         }
 
 
-        public static async Task WriteChartOfAccountsAsync()
+        public static async Task WriteChartOfAccountsAsync(ChartOfAccount chartOfAccount)
         {
             try
             {
-
-                var CurrentSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
-                // Read this from your ERP
-                var ChartOfAccount = new ChartOfAccount
-                {
-                    BusinessUnitId = Settings.BUSINESS_UNIT_ID,
-                    Name = "ChartOfAccount - " + CurrentSeconds,
-                    ExternalId = "ExternalId - " + CurrentSeconds
-                };
-
-                var json = JsonConvert.SerializeObject(ChartOfAccount);
+                var json = JsonConvert.SerializeObject(chartOfAccount);
                 Console.WriteLine(json);
 
                 String? res = await RestClient.Post("/chart-of-accounts", json);
@@ -168,24 +135,12 @@ namespace RtzenAPIs
             }
         }
 
-        public static async Task WriteVendorsAsync()
+        public static async Task WriteVendorsAsync(Vendor vendor)
         {
             try
             {
 
-                var CurrentSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
-                // Read this from your ERP
-                var Vendor = new Vendor
-                {
-                    BusinessUnit = new BusinessUnit
-                    {
-                        Id = Settings.BUSINESS_UNIT_ID
-                    },
-                    Name = "Vendor - " + CurrentSeconds,
-                    ExternalId = "ExternalId - " + CurrentSeconds
-                };
-
-                var json = JsonConvert.SerializeObject(Vendor);
+                var json = JsonConvert.SerializeObject(vendor);
                 Console.WriteLine(json);
 
                 String? res = await RestClient.Post("/vendors", json);
@@ -202,39 +157,11 @@ namespace RtzenAPIs
             }
         }
 
-        public static async Task WriteBillsAsync()
+        public static async Task WriteBillsAsync(Bill bill)
         {
             try
             {
-
-                var CurrentSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
-                // Read this from your ERP
-                var Bill = new Bill
-                {
-                    BusinessUnit = new BusinessUnit
-                    {
-                        Id = Settings.BUSINESS_UNIT_ID
-                    },
-                    Vendor = new Vendor
-                    {
-                        Id = Settings.VENDOR_ID
-                    },
-
-                    BillDate = DateTime.Now,
-                    DueDate = DateTime.Now.AddDays(30),
-                    LineItems = new List<LineItem>
-                    {
-                        new LineItem
-                        {
-                            Description = "LineItem - " + CurrentSeconds,
-                            Quantity = 2,
-                            Price = 100,
-                            Amount = 200,
-                        }
-                    }
-                };
-
-                var json = JsonConvert.SerializeObject(Bill);
+                var json = JsonConvert.SerializeObject(bill);
                 Console.WriteLine(json);
 
                 String? res = await RestClient.Post("/bills", json);
