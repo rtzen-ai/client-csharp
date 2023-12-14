@@ -1,5 +1,7 @@
-using System;
+﻿using System;
+using Newtonsoft.Json;
 using RtzenAPIs.models;
+using RtzenAPIs.utils;
 
 namespace RtzenAPIs
 {
@@ -47,7 +49,20 @@ namespace RtzenAPIs
                     Name = "ChartOfAccount - " + CurrentSeconds,
                     ExternalId = "ExternalId - " + CurrentSeconds
                 };
-                await RtzenAPI.WriteChartOfAccountsAsync(chartOfAccount);
+                List<ChartOfAccount> chartOfAccounts = new();
+                chartOfAccounts.Add(chartOfAccount);
+                List<WriteResponse<ChartOfAccount>> writeResult = await RtzenAPI.WriteChartOfAccountsAsync(chartOfAccounts);
+                foreach (var item in writeResult)
+                {
+                    if (item.Object != null)
+                    {
+                        Console.WriteLine("ChartOfAccount Created: " + item?.Object?.Id);
+                    }
+                    else
+                    {
+                        Console.WriteLine("ChartOfAccount Creation Failed: " + item.Error.StatusCode + ", " + JsonConvert.SerializeObject(item.Error));
+                    }
+                }
             }
             if (Settings.WRITE_VENDORS)
             {
@@ -63,8 +78,20 @@ namespace RtzenAPIs
                     Name = "Vendor - " + CurrentSeconds,
                     ExternalId = "ExternalId - " + CurrentSeconds
                 };
-
-                await RtzenAPI.WriteVendorsAsync(vendor);
+                List<Vendor> vendors = new();
+                vendors.Add(vendor);
+                List<WriteResponse<Vendor>> writeResult = await RtzenAPI.WriteVendorsAsync(vendors);
+                foreach (var item in writeResult)
+                {
+                    if (item.Object != null)
+                    {
+                        Console.WriteLine("Vendor Created: " + item?.Object?.Id);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Vendor Creation Failed: " + item.Error.StatusCode + ", " + JsonConvert.SerializeObject(item.Error));
+                    }
+                }
             }
             if (Settings.WRITE_BILLS)
             {
@@ -94,7 +121,20 @@ namespace RtzenAPIs
                         }
                     }
                 };
-                await RtzenAPI.WriteBillsAsync(bill);
+                List<Bill> bills = new();
+                bills.Add(bill);
+                List<WriteResponse<Bill>> writeResult = await RtzenAPI.WriteBillsAsync(bills);
+                foreach (var item in writeResult)
+                {
+                    if (item.Object != null)
+                    {
+                        Console.WriteLine("Bill Created: " + item?.Object?.Id);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Bill Creation Failed: " + item.Error.StatusCode + ", " + JsonConvert.SerializeObject(item.Error));
+                    }
+                }
             }
 
             Console.WriteLine("Sync Finished");

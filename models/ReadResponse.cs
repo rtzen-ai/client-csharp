@@ -1,7 +1,7 @@
 ﻿using System;
 namespace RtzenAPIs.models
 {
-    public class ResponseObject<T>
+    public class ReadResponse<T>
     {
         public List<T> Objects { get; set; }
         public PagingInfo Paging { get; set; }

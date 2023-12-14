@@ -21,13 +21,13 @@ namespace RtzenAPIs
                     String? res = await RestClient.Get("/vendors", page);
                     if (res != null)
                     {
-                        var responseObject = JsonConvert.DeserializeObject<ResponseObject<Vendor>>(res);
-                        foreach (var item in responseObject.Objects)
+                        var readResponse = JsonConvert.DeserializeObject<ReadResponse<Vendor>>(res);
+                        foreach (var item in readResponse.Objects)
                         {
                             Console.WriteLine("Page: " + page + ", Vendor: " + item.Id);
                             result.Add(item);
                         }
-                        hasNext = responseObject.Paging.Next;
+                        hasNext = readResponse.Paging.Next;
                         page++;
                     }
                     else
@@ -56,13 +56,13 @@ namespace RtzenAPIs
                     String? res = await RestClient.Get("/chart-of-accounts", page);
                     if (res != null)
                     {
-                        var responseObject = JsonConvert.DeserializeObject<ResponseObject<ChartOfAccount>>(res);
-                        foreach (var item in responseObject.Objects)
+                        var readResponse = JsonConvert.DeserializeObject<ReadResponse<ChartOfAccount>>(res);
+                        foreach (var item in readResponse.Objects)
                         {
                             Console.WriteLine("Page: " + page + ", ChartOfAccount: " + item.Id);
                             result.Add(item);
                         }
-                        hasNext = responseObject.Paging.Next;
+                        hasNext = readResponse.Paging.Next;
                         page++;
                     }
                     else
@@ -91,13 +91,13 @@ namespace RtzenAPIs
                     String? res = await RestClient.Get("/bills", page);
                     if (res != null)
                     {
-                        var responseObject = JsonConvert.DeserializeObject<ResponseObject<Bill>>(res);
-                        foreach (var item in responseObject.Objects)
+                        var readResponse = JsonConvert.DeserializeObject<ReadResponse<Bill>>(res);
+                        foreach (var item in readResponse.Objects)
                         {
                             Console.WriteLine("Page: " + page + ", Bill: " + item.Id);
                             result.Add(item);
                         }
-                        hasNext = responseObject.Paging.Next;
+                        hasNext = readResponse.Paging.Next;
                         page++;
                     }
                     else
@@ -114,68 +114,124 @@ namespace RtzenAPIs
         }
 
 
-        public static async Task WriteChartOfAccountsAsync(ChartOfAccount chartOfAccount)
+        public static async Task<List<WriteResponse<ChartOfAccount>>> WriteChartOfAccountsAsync(List<ChartOfAccount> chartOfAccounts)
         {
-            try
+            List<WriteResponse<ChartOfAccount>> result = new();
+            foreach (var chartOfAccount in chartOfAccounts)
             {
-                var json = JsonConvert.SerializeObject(chartOfAccount);
-                Console.WriteLine(json);
-
-                String? res = await RestClient.Post("/chart-of-accounts", json);
-                if (res != null)
+                try
                 {
-                    var responseObject = JsonConvert.DeserializeObject<ChartOfAccount>(res);
-                    Console.WriteLine($"Handle ChartOfAccount: {responseObject?.Id ?? "Id is null, please check logs for the errors"}");
-                }
+                    var json = JsonConvert.SerializeObject(chartOfAccount);
+                    Console.WriteLine("Upserting chartOfAccount: " + json);
 
+                    APIResponse res = await RestClient.Post("/chart-of-accounts", json);
+                    if (RestClient.IsSuccessStatusCode(res.StatusCode) && res.Result != null)
+                    {
+                        var chartOfAccountResponse = JsonConvert.DeserializeObject<ChartOfAccount>(res.Result);
+                        result.Add(new WriteResponse<ChartOfAccount> { Object = chartOfAccountResponse });
+                    }
+                    else
+                    {
+                        if (res.Result != null)
+                        {
+                            var error = JsonConvert.DeserializeObject<WriteResponse<ChartOfAccount>.ErrorResult>(res.Result);
+                            result.Add(new WriteResponse<ChartOfAccount> { Error = error });
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Something went wrong: {res.StatusCode}");
+                            result.Add(new WriteResponse<ChartOfAccount> { Error = new WriteResponse<ChartOfAccount>.ErrorResult { StatusCode = res.StatusCode } });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                    result.Add(new WriteResponse<ChartOfAccount> { Error = new WriteResponse<ChartOfAccount>.ErrorResult { StatusCode = -1 } });
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
+            return result;
         }
 
-        public static async Task WriteVendorsAsync(Vendor vendor)
+        public static async Task<List<WriteResponse<Vendor>>> WriteVendorsAsync(List<Vendor> vendors)
         {
-            try
+            List<WriteResponse<Vendor>> result = new();
+            foreach (var vendor in vendors)
             {
-
-                var json = JsonConvert.SerializeObject(vendor);
-                Console.WriteLine(json);
-
-                String? res = await RestClient.Post("/vendors", json);
-                if (res != null)
+                try
                 {
-                    var responseObject = JsonConvert.DeserializeObject<Vendor>(res);
-                    Console.WriteLine($"Handle Vendor: {responseObject?.Id ?? "Id is null, please check logs for the errors"}");
-                }
+                    var json = JsonConvert.SerializeObject(vendor);
+                    Console.WriteLine("Upserting vendor: " + json);
 
+                    APIResponse res = await RestClient.Post("/vendors", json);
+                    if (RestClient.IsSuccessStatusCode(res.StatusCode) && res.Result != null)
+                    {
+                        var vendorResponse = JsonConvert.DeserializeObject<Vendor>(res.Result);
+                        result.Add(new WriteResponse<Vendor>
+                        {
+                            Object = vendorResponse
+                        });
+                    }
+                    else
+                    {
+                        if (res.Result != null)
+                        {
+                            var error = JsonConvert.DeserializeObject<WriteResponse<Vendor>.ErrorResult>(res.Result);
+                            result.Add(new WriteResponse<Vendor> { Error = error });
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Something went wrong: {res.StatusCode}");
+                            result.Add(new WriteResponse<Vendor> { Error = new WriteResponse<Vendor>.ErrorResult { StatusCode = res.StatusCode } });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                    result.Add(new WriteResponse<Vendor> { Error = new WriteResponse<Vendor>.ErrorResult { StatusCode = -1 } });
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
+            return result;
         }
 
-        public static async Task WriteBillsAsync(Bill bill)
+        public static async Task<List<WriteResponse<Bill>>> WriteBillsAsync(List<Bill> bills)
         {
-            try
+            List<WriteResponse<Bill>> result = new();
+            foreach (var bill in bills)
             {
-                var json = JsonConvert.SerializeObject(bill);
-                Console.WriteLine(json);
-
-                String? res = await RestClient.Post("/bills", json);
-                if (res != null)
+                try
                 {
-                    var responseObject = JsonConvert.DeserializeObject<Bill>(res);
-                    Console.WriteLine($"Handle Bill: {responseObject?.Id ?? "Id is null, please check logs for the errors"}");
-                }
+                    var json = JsonConvert.SerializeObject(bill);
+                    Console.WriteLine("Upserting bill: " + json);
 
+                    APIResponse res = await RestClient.Post("/bills", json);
+                    if (RestClient.IsSuccessStatusCode(res.StatusCode) && res.Result != null)
+                    {
+                        var billResponse = JsonConvert.DeserializeObject<Bill>(res.Result);
+                        result.Add(new WriteResponse<Bill> { Object = billResponse });
+                    }
+                    else
+                    {
+                        if (res.Result != null)
+                        {
+                            var error = JsonConvert.DeserializeObject<WriteResponse<Bill>.ErrorResult>(res.Result);
+                            result.Add(new WriteResponse<Bill> { Error = error });
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Something went wrong: {res.StatusCode}");
+                            result.Add(new WriteResponse<Bill> { Error = new WriteResponse<Bill>.ErrorResult { StatusCode = res.StatusCode } });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                    result.Add(new WriteResponse<Bill> { Error = new WriteResponse<Bill>.ErrorResult { StatusCode = -1 } });
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
+            return result;
         }
     }
 

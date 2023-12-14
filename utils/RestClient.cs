@@ -27,8 +27,9 @@ namespace RtzenAPIs.utils
             }
         }
 
-        public static async Task<String?> Post(String path, String body)
+        public static async Task<APIResponse> Post(String path, String body)
         {
+            var result = new APIResponse();
             using (var client = new HttpClient())
             {
                 var request = new HttpRequestMessage(HttpMethod.Post, Settings.API_URL + path);
@@ -40,14 +41,22 @@ namespace RtzenAPIs.utils
                 var response = await client.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadAsStringAsync();
+                    result.StatusCode = (int)response.StatusCode;
+                    result.Result = await response.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     Console.WriteLine($"Request failed with status code: {response.StatusCode}");
-                    return null;
+                    result.StatusCode = (int)response.StatusCode;
+                    result.Result = await response.Content.ReadAsStringAsync();
                 }
             }
+            return result;
+        }
+
+        public static bool IsSuccessStatusCode(int statusCode)
+        {
+            return statusCode >= 200 && statusCode <= 299;
         }
 
     }
