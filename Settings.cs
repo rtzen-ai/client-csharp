@@ -20,11 +20,12 @@ namespace RtzenAPIs
         // Optinal Settings
         public static readonly int RESULTS_PER_PAGE = 100;
 
-        // For Testing the Syns
+        // For Testing the Sync
         public static readonly String BUSINESS_UNIT_ID = "8e0b4bca-xxxx-xxxx-xxxx-xxxxxxxxxx";
         public static readonly String VENDOR_ID = "4c4d6483-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
 
 
     }
 }
+
 
